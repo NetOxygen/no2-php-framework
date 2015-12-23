@@ -1,0 +1,7 @@
+{
+    "require": {
+        "ircmaxell/password-compat": "~1.0",
+        "realityking/hash_equals": "dev-master",
+        "symfony/yaml": "~2.6"
+    }
+}

@@ -1,0 +1,35 @@
+# this a Hip Hop VM (http://www.hiphop-php.com/blog/) config file for no2.
+
+Server {
+      Port = 8080
+}
+IncludeSearchPaths {
+       * = .
+}
+
+StaticFile {
+    Extensions {
+        js = text/javascript
+        css = text/css
+    }
+}
+DefaultDocument = index.php
+
+# http://stackoverflow.com/questions/18965025/hhvm-rewrite-rules-for-single-entry-point
+AllowedDirectories {
+    * = Templates
+    * = Ressources
+}
+
+VirtualHost {
+    * {
+        Pattern = .*
+        RewriteRules {
+            * {
+                 pattern = ^(.*)$
+                 to = index.php$1
+                 qsa = true
+            }
+        }
+    }
+}

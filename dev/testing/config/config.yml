@@ -1,0 +1,76 @@
+# Security first :)
+security:
+    # The bcrypt cost, used for authentication.
+    #
+    #   This value should be ajusted so that password check takes between 0.2s
+    #   and 0.5s (depending on the resistance against online/offline attack
+    #   desired).
+    bcrypt_cost: 14
+
+    # CORS setup
+    cors:
+        allowed-origins:
+            - https://my.trusted.origin.tld
+
+
+# routing and URLs options
+routing:
+    # Rewrite URLs, set to true to activate.
+    #
+    #   This will turn URLs like /?controller=foo&action=bar&id=42 to /foo/bar/42
+    #
+    #   NOTE:
+    #     If you activate this option, make sure that the server is configured
+    #     accordingly (for example through .htaccess under Apache).
+    rewrite: true
+
+
+# localization, timezone and internationalization configuration options.
+l10n:
+    # Timezone setup. used as argument for date_default_timezone_set()
+    #
+    #   see http://php.net/manual/en/function.date-default-timezone-set.php
+    #   To find a Timezone see http://www.php.net/manual/en/timezones.php
+    default_timezone: Europe/Zurich
+
+    # Locale setup. used as argument for setlocale()
+    #
+    #  see http://php.net/manual/fr/function.setlocale.php
+    #  To find a locale run `locale -a'.
+    #
+    #  NOTE:
+    #    An UTF-8 locale is strongly recommended since no2 rely on using UTF-8.
+    default_locale: fr_CH.utf8
+
+
+# database setup.
+database: mysql://no2test:no2test@localhost/no2test
+
+
+# Logger setup.
+logger:
+
+    # printed on every lines, mostly if many loggers uses the same file or
+    # facility.
+    name: no2demo
+    # maximum verbosity level.
+    #
+    #  possible values are:
+    #    EMERGENCY - system is unusable
+    #    ALERT     - action must be taken immediately
+    #    CRITICAL  - critical conditions
+    #    ERROR     - error conditions
+    #    WARNING   - warning conditions
+    #    NOTICE    - normal but significant condition
+    #    INFO      - informational messages
+    #    DEBUG     - debug messages
+    #    No2/DEBUG - used internally by the no2 framework, very verbose.
+    #
+    #  see No2_Logger constants.
+    level: No2/DEBUG
+
+    # optional, the log file to write to.
+    logfile_path: '{{TESTSDIR}}/tests.log'
+
+    # optional, the syslog facility.
+    #facility: LOG_LOCAL0

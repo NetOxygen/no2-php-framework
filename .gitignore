@@ -1,0 +1,5 @@
+web/.htaccess
+config/*.yml
+vendor/
+*.log
+.todo

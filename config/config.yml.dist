@@ -1,0 +1,90 @@
+# Security first :)
+security:
+    # The bcrypt cost, used for authentication.
+    #
+    #   This value should be ajusted so that password check takes between 0.2s
+    #   and 0.5s (depending on the resistance against online/offline attack
+    #   desired).
+    bcrypt_cost: 14
+    # true if you want csrf check by default, false otherwise.
+    csrf: true
+    # CORS setup
+    # see https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS
+    cors:
+        enabled: false
+        allow-credentials: false
+        allowed-origins:
+            - https://my.trusted.origin.tld
+
+
+# routing and URLs options
+routing:
+    # Rewrite URLs, set to true to activate.
+    #
+    #   This will turn URLs like /?controller=foo&action=bar&id=42 to /foo/bar/42
+    #
+    #   NOTE:
+    #     If you activate this option, make sure that the server is configured
+    #     accordingly (for example through .htaccess under Apache).
+    rewrite: true
+
+
+# localization, timezone and internationalization configuration options.
+l10n:
+    # Timezone setup. used as argument for date_default_timezone_set()
+    #
+    #   see http://php.net/manual/en/function.date-default-timezone-set.php
+    #   To find a Timezone see http://www.php.net/manual/en/timezones.php
+    default_timezone: Europe/Zurich
+
+    # Locale setup. used as argument for setlocale()
+    #
+    #  see http://php.net/manual/fr/function.setlocale.php
+    #  To find a locale run `locale -a'.
+    #
+    #  NOTE:
+    #    An UTF-8 locale is strongly recommended since no2 rely on using UTF-8.
+    default_locale: en_US.utf8
+    # the date, in the strftime format, see
+    # https://secure.php.net/manual/en/function.strptime.php
+    # XXX: this will likely work with "%e %B %Y" and likely bug with everyting
+    # else.
+    strftime_date_format: %e %B %Y
+    # the datetime, the strftime format, see
+    # https://secure.php.net/manual/en/function.strptime.php
+    # XXX: this will likely work with "%e %B %Y %H:%M" and likely bug with
+    # everyting else.
+    strftime_datetime_format: %e %B %Y %H:%M
+
+
+# database setup.
+database: mysql://root:root@localhost/no2demo
+
+
+# Logger setup.
+logger:
+
+    # printed on every lines, mostly if many loggers uses the same file or
+    # facility.
+    name: no2demo
+    # maximum verbosity level.
+    #
+    #  possible values are:
+    #    EMERGENCY - system is unusable
+    #    ALERT     - action must be taken immediately
+    #    CRITICAL  - critical conditions
+    #    ERROR     - error conditions
+    #    WARNING   - warning conditions
+    #    NOTICE    - normal but significant condition
+    #    INFO      - informational messages
+    #    DEBUG     - debug messages
+    #    No2/DEBUG - used internally by the no2 framework, very verbose.
+    #
+    #  see No2_Logger constants.
+    level: No2/DEBUG
+
+    # optional, the log file to write to.
+    logfile_path: '{{PROJECTDIR}}/log/application.log'
+
+    # optional, the syslog facility.
+    #facility: LOG_LOCAL0
