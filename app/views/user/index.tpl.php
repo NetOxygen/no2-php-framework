@@ -2,21 +2,21 @@
     <div class="pull-right btn-group">
         <a class="btn btn-primary" href="<?php print h($router->new_user_url()); ?>">
             <span class="glyphicon glyphicon-plus"></span>
-            <?php print t('add a new user'); ?>
+            <?php print ht('admin.user.index.add_a_new_user'); ?>
         </a>
     </div>
 <?php endif; ?>
 
-<h1><?php print t('User list'); ?></h1>
+<h1><?php print ht('admin.user.index.title'); ?></h1>
 
 <table class="table table-bordered table-condensed">
     <thead>
         <tr>
-            <th class="text-muted"><?php print t('#'); ?></th>
-            <th><?php print t('Fullname'); ?></th>
-            <th><?php print t('Email'); ?></th>
-            <th><?php print t('Role'); ?></th>
-            <th><?php print t('created at'); ?></th>
+            <th class="text-muted"><?php print ht('admin.user.index.heading.id'); ?></th>
+            <th><?php print ht('admin.user.index.heading.fullname'); ?></th>
+            <th><?php print ht('admin.user.index.heading.email'); ?></th>
+            <th><?php print ht('admin.user.index.heading.role'); ?></th>
+            <th><?php print ht('admin.user.index.heading.created_at'); ?></th>
         </tr>
     </thead>
     <tbody>

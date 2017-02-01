@@ -30,7 +30,8 @@ class No2_Logger
     const INFO   = 6; /**< Informational : informational messages           */
     const DEBUG  = 7; /**< Debug         : debug messages                   */
 
-    const _NO2_DEBUG = 9; /**< No2 Debug: Used internally by No2 files */
+    const _NO2_DEBUG = 8; /**< No2 Debug: Used internally by No2 files */
+    const LEVEL_MAX = No2_Logger::_NO2_DEBUG;
 
     /*
      * used by level_to_string() and string_to_level().
@@ -263,7 +264,7 @@ class No2_Logger
     {
         foreach (func_get_args() as $message) {
             if (is_null($message))
-                $message = '(null)';
+                $message = 'NULL';
             if (!is_string($message))
                 $message = print_r($message, true);
             static::_log(self::DEBUG, $message);
@@ -286,7 +287,7 @@ class No2_Logger
     {
         foreach (func_get_args() as $message) {
             if (is_null($message))
-                $message = '(null)';
+                $message = 'NULL';
             if (!is_string($message))
                 $message = print_r($message, true);
             static::_log(self::_NO2_DEBUG, $message);
@@ -311,7 +312,7 @@ class No2_Logger
         if ($level <= static::$level) {
             $message = sprintf("[%s %s %s] %s: %s",
                 static::$name,
-                date(DateTime::ISO8601),
+                date('c'),
                 static::$reqid,
                 static::level_to_string($level),
                 $message
@@ -336,10 +337,10 @@ class No2_Logger
     public static function to_html($id)
     {
         if (!empty(static::$messages)): ?>
-            <div id="<?php print htmlspecialchars($id, ENT_COMPAT | ENT_HTML5, 'UTF-8'); ?>">
+            <div id="<?php print htmlspecialchars($id, ENT_QUOTES | ENT_HTML5, 'UTF-8'); ?>">
                 <ul>
                     <?php foreach (static::$messages as $message): ?>
-                        <li><pre><?php print htmlspecialchars($message, ENT_COMPAT | ENT_HTML5, 'UTF-8'); ?></pre></li>
+                        <li><pre><?php print htmlspecialchars($message, ENT_NOQUOTES | ENT_HTML5, 'UTF-8'); ?></pre></li>
                     <?php endforeach; ?>
                 </ul>
             </div>

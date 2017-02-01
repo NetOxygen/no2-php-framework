@@ -40,7 +40,39 @@ function http_host()
  */
 function h($string)
 {
-    return htmlspecialchars($string, ENT_COMPAT | ENT_HTML5, 'UTF-8');
+    return htmlspecialchars($string, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+}
+
+/**
+ * sane JSON encoding.
+ *
+ * @see https://wiki.php.net/rfc/json_preserve_fractional_part
+ * @see https://secure.php.net/manual/en/function.json-encode.php
+ * @see https://secure.php.net/manual/en/json.constants.php
+ */
+function sane_json_encode($value, $options = 0, $depth = 512)
+{
+    // NOTE: since PHP 5.6.6
+    if (defined('JSON_PRESERVE_ZERO_FRACTION')) {
+        $options |= JSON_PRESERVE_ZERO_FRACTION;
+    }
+    return json_encode($value, $options, $depth);
+}
+
+/**
+ * "HTML safe" JSON encode.
+ *
+ * When printing in HTML context we need to escape characters that could be
+ * interpreted by HTML, like LESS-THAN SIGN, GREATER-THAN SIGN etc.
+ *
+ * @see https://secure.php.net/manual/en/function.json-encode.php
+ * @see https://secure.php.net/manual/en/json.constants.php
+ */
+function html_json_encode($value, $options = 0, $depth = 512)
+{
+    //            < and >           &              '               "
+    $options |= JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
+    return sane_json_encode($value, $options, $depth);
 }
 
 /**
@@ -106,19 +138,35 @@ function session_active()
 }
 
 /**
- * convert an ISO 8601 formated Datetime to a PHP DateTime object.
+ * convert an ISO-8601 formated string to a PHP DateTime object.
  *
  * see http://stackoverflow.com/questions/14849446/php-parse-date-in-iso-format
  *
  * @bugs
- *   Milliseconds will be lost. Also the TimeZone info will be discarded.
+ *   Milliseconds will be lost.
  *
  * @return
  *   A DateTime object or false on error.
  */
 function iso8601_to_datetime($str)
 {
-    return DateTime::createFromFormat('Y-m-d\TH:i:s+', $str);
+    $i = strtotime($str);
+    $d = new DateTime();
+    return $d->setTimestamp($i);
+}
+
+/**
+ * convert a PHP DateTime object to an ISO-8601 string
+ *
+ * @see
+ *   http://php.net/manual/en/class.datetime.php#datetime.constants.iso8601
+ *
+ * @return
+ *   A string.
+ */
+function datetime_to_iso8601($d)
+{
+    return $d->format(DateTime::ATOM);
 }
 
 /**
@@ -146,4 +194,12 @@ function is_utf8($string)
         | [\xF1-\xF3][\x80-\xBF]{3}          # planes 4-15
         |  \xF4[\x80-\x8F][\x80-\xBF]{2}     # plane 16
     )*$%xs', $string);
+}
+
+/**
+ * array_map like for stdClass.
+ */
+function object_map($func, $obj)
+{
+    return (object)array_map($func, (array)$obj);
 }

@@ -1,0 +1,28 @@
+{
+    "linters": {
+        "chmod": {
+            "type": "chmod"
+        },
+        "filename": {
+            "type": "filename"
+        },
+        "php": {
+            "type": "php",
+            "include": "(\\.php$)"
+        },
+        "phpcs": {
+            "type": "phpcs",
+            "phpcs.standard" : "PSR2",
+            "include": "(\\.php$)",
+            "severity.rules" : {
+                "(^PHPCS\\.E\\.PEAR\\.NamingConventions\\.ValidFunctionName\\.FunctionNoCapital)" : "disabled",
+                "(^PHPCS\\.E\\.PEAR\\.NamingConventions\\.ValidFunctionName\\.ScopeNotCamelCaps)" : "disabled",
+                "(^PHPCS\\.E\\.PSR1\\.Classes\\.ClassDeclaration\\.MissingNamespace)" : "disabled",
+                "(^PHPCS\\.E\\.PSR1\\.Methods\\.CamelCapsMethodName)" : "disabled",
+                "(^PHPCS\\.W\\.Generic\\.Files\\.LineLength\\.TooLong)" : "disabled",
+                "(^PHPCS\\.E\\.)" : "warning",
+                "(^PHPCS\\.W\\.)" : "advice"
+            }
+        }
+    }
+}

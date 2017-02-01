@@ -1,0 +1,100 @@
+date:
+    long: %e %B %Y # 5 Novembre 2014
+
+time:
+    long: %A, %e %B, %I:%M %p # Mercredi, 26 Novembre, 12:07 PM
+
+app:
+    title: Démo No2
+
+    # used by the ErrorController / ErrorView
+    errors:
+        title: Oups!
+        default: Une erreur s'est produite, merci de nous contacter.
+        not_found: 404 Page non trouvée.
+        unauthorized: Vous n'êtes pas autorisé à accéder à cette page.
+
+navigation:
+    toggle: Basculer la navigation
+    navbar:
+        users: Utilisateurs
+        me: Mon profil
+        logout: déconnexion
+
+# used by models
+validations:
+    empty: ne peut pas être vide
+    invalid: est invalide
+    already_taken: est déjà pris # used for email
+
+# models
+user:
+    role:
+        admin: Administrateur
+        user: Utilisateur (autre)
+    gender:
+        M: Monsieur
+        '?': ?
+        F: Madame
+    status:
+        active: actif
+        inactive: inactif
+    fields: &user-fields
+        status: statut
+        role: role
+        email: email
+        password: mot de passe
+        gender: genre
+        fullname: nom complet
+        description: description
+
+admin:
+    user:
+        messages:
+            wrong_email_or_password: Mauvais email ou password
+            welcome_back: Bienvenue %name%!
+            logged_out: Vous êtes déconnecté
+            has_been_saved: l'utilisateur "%name%" a été enregistré
+            could_not_be_saved: l'utilisateur "%name%" n'a pas pu être enregistré
+            has_been_disabled: l'utilisateur "%name%" a été désactivé
+            could_not_be_disabled: l'utilisateur "%name%" n'a pas pu être désactivé
+            has_been_enabled: l'utilisateur "%name%" a été activé
+            could_not_be_enabled: l'utilisateur "%name%" n'a pas pu être activé
+            has_been_destroyed: l'utilisateur "%name%" a été effacé
+        login:
+            title: Connexion
+            submit_btn: me connecter
+        form:
+            add_a_new_user: Ajouter un utilisateur
+            edit_user: modifier "%name%"
+            user_informations_legend: informations de l'utilisateur
+            fullname_placeholder: nom prénom
+            password_placeholder: nouveau mot de passe
+            password_confirmation: confirmation
+            password_confirmation_placeholder: confirmer le nouveau mot de passe
+            pick_a_role: choisir un role pour cet utilisateur
+            cancel_btn: annuler
+            save_btn: enregister
+            password_confirmation_missmatch: la confirmation du mot de passe ne correspond pas
+        index:
+            add_a_new_user: Ajouter un utilisateur
+            title: Liste des utilisateurs
+            heading:
+                <<: *user-fields
+                id: '#'
+                created_at: crée le
+        show:
+            actions:
+                send_an_email_btn: E-Mail
+                edit_btn: modifier
+                disable_btn: désactiver
+                enable_btn: activer
+                destroy_btn: effacer
+            created_at: crée le
+            updated_at: modifié le
+            abilities: abilités
+        destroy:
+            confirmation_title: Confirmer la suppression de l'utilisateur
+            are_you_sure: êtes-vous sûr ?
+            no_i_am_not_sure: non
+            yes_i_am_sure: oui

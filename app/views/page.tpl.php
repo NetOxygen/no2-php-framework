@@ -2,18 +2,21 @@
 <html lang="<?= h(current_lang()); ?>">
     <head>
         <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="author"    content="Net Oxygen Sàrl (https://netoxygen.ch)">
         <meta name="generator" content="no2(<?php print h(NO2VERSION); ?>)">
+        <!-- à-la-Rails CSRF meta tags, so stuff like jquery.form can get it -->
+        <meta name="csrf-param" content="_csrf">
+        <meta name="csrf-token" content="<?= csrf_token(); ?>">
 
-        <title><?php print t('The Application Title.'); ?></title>
-
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title><?php print ht('app.title'); ?></title>
 
         <!-- fav icon -->
-        <link rel="shortcut icon" typ="image/png" href="<?php print h($router->assets_url('img/favicon.png')); ?>">
+        <link rel="shortcut icon" type="image/png" href="<?php print h($router->assets_url('img/favicon.png')); ?>">
 
         <!-- jQuery -->
-        <script src="<?php print h($router->assets_url('js/jquery-2.1.4.min.js')); ?>"></script>
+        <script src="<?php print h($router->assets_url('js/jquery-3.1.0.min.js')); ?>"></script>
+        <script src="<?php print h($router->assets_url('js/jquery-migrate-3.0.0.min.js')); ?>"></script>
 
         <!-- underscorejs -->
         <script src="<?php print h($router->assets_url('js/underscore-min.js')); ?>"></script>
@@ -27,7 +30,6 @@
         <script src="<?php print h($router->assets_url('js/moment-with-locales.min.js')); ?>"></script>
 
         <!-- bootstrap-datetimepicker -->
-        <?php // NOTE: don't update to 4.x until https://github.com/Eonasdan/bootstrap-datetimepicker/issues/740 is fixed. ?>
         <script src="<?php print h($router->assets_url('js/bootstrap-datetimepicker/build/js/bootstrap-datetimepicker.min.js')); ?>"></script>
         <link href=<?php print h($router->assets_url('js/bootstrap-datetimepicker/build/css/bootstrap-datetimepicker.min.css')); ?> rel="stylesheet">
 
@@ -43,25 +45,21 @@
         </style>
 
         <script>
-        window.lang = <?= json_encode(current_lang()); ?>;
         jQuery(document).ready(function ($) {
+            var lang = <?= html_json_encode(current_lang()); ?>;
             // bootstrap tooltip
             $('[rel=tooltip]').tooltip();
             // momentjs
             moment().format();
-            moment.locale(window.lang);
+            moment.locale(lang);
             // bootstrap-datetimepicker
             $('.datepickerize').datetimepicker({
-                pickTime: false,
-                language: window.lang,
-                weekStart: 1,
-                format: <?= json_encode(strftime2momentjs(AppConfig::get('l10n.strftime_date_format'))); ?>
+                locale: moment.locale(),
+                format: <?= html_json_encode(strftime2momentjs(AppConfig::get('l10n.strftime_date_format'))); ?>
             });
             $('.datetimepickerize').datetimepicker({
-                pickTime: true,
-                language: window.lang,
-                weekStart: 1,
-                format: <?= json_encode(strftime2momentjs(AppConfig::get('l10n.strftime_datetime_format'))); ?>
+                locale: moment.locale(),
+                format: <?= html_json_encode(strftime2momentjs(AppConfig::get('l10n.strftime_datetime_format'))); ?>
             });
         });
         </script>

@@ -5,7 +5,7 @@
         "behat/mink-extension": "*",
         "behat/mink-goutte-driver": "*",
         "behat/mink-selenium2-driver": "*",
-        "phpunit/phpunit": "3.7.*",
+        "phpunit/phpunit": "4.8.*",
         "phpunit/dbunit": ">=1.2"
     },
     "minimum-stability": "dev",

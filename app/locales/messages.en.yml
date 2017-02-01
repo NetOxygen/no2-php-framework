@@ -1,0 +1,100 @@
+date:
+    long: %e %B %Y # 5 November 2014
+
+time:
+    long: %A %e %B %Y, %I:%M %p # Wednesday 5 November 2014, 00:00 AM
+
+app:
+    title: No2 Demo
+
+    # used by the ErrorController / ErrorView
+    errors:
+        title: Oups!
+        default: An error occured, please contact us.
+        not_found: 404 Page not found.
+        unauthorized: You are not authorized to access this page.
+
+navigation:
+    toggle: Toggle navigation
+    navbar:
+        users: Users
+        me: My profile
+        logout: Logout
+
+# used by models
+validations:
+    empty: can not be empty
+    invalid: is invalid
+    already_taken: is already taken # used for email
+
+# models
+user:
+    role:
+        admin: Administrator
+        user: User (other)
+    gender:
+        M: Mister
+        '?': ?
+        F: Miss
+    status:
+        active: active
+        inactive: inactive
+    fields: &user-fields
+        status: status
+        role: role
+        email: email
+        password: password
+        gender: gender
+        fullname: fullname
+        description: description
+
+admin:
+    user:
+        messages:
+            wrong_email_or_password: Wrong email or password, login failed.
+            welcome_back: Welcome back %name%!
+            logged_out: You are logged out.
+            has_been_saved: the user "%name%" has been saved
+            could_not_be_saved: the user "%name%" could not be saved
+            has_been_disabled: the user "%name%" has been disabled
+            could_not_be_disabled: the user "%name%" could not be disabled
+            has_been_enabled: the user "%name%" has been enabled
+            could_not_be_enabled: the user "%name%" could not be enabled
+            has_been_destroyed: the user "%name%" has been successfully removed
+        login:
+            title: User login
+            submit_btn: log me in
+        form:
+            add_a_new_user: Add a new user
+            edit_user: edit "%name%"
+            user_informations_legend: user informations
+            fullname_placeholder: firstname lastname
+            password_placeholder: new password
+            password_confirmation: password confirmation
+            password_confirmation_placeholder: confirm the new password
+            pick_a_role: choose a role for this user
+            cancel_btn: cancel
+            save_btn: save
+            password_confirmation_missmatch: the password confirmation does not match
+        index:
+            add_a_new_user: add a new user
+            title: User list
+            heading:
+                <<: *user-fields
+                id: '#'
+                created_at: created at
+        show:
+            actions:
+                send_an_email_btn: E-Mail
+                edit_btn: edit
+                disable_btn: disable
+                enable_btn: enable
+                destroy_btn: destroy
+            created_at: created at
+            updated_at: updated at
+            abilities: abilities
+        destroy:
+            confirmation_title: User destroy confirmation
+            are_you_sure: are you sure?
+            no_i_am_not_sure: no
+            yes_i_am_sure: yes

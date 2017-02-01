@@ -195,6 +195,10 @@ class No2_View
      *   is 303 See Other as this method is intended to be used by action
      *   methods modifying the database by POST requests.
      *   (see http://en.wikipedia.org/wiki/HTTP_303)
+     *
+     * @return
+     *   The given $status, allowing "return $view->redirect_to(...)" from
+     *   controllers.
      */
     public function redirect_to($location, $status=No2_HTTP::SEE_OTHER)
     {
@@ -206,6 +210,8 @@ class No2_View
         // prepare the flash for the next call.
         if (session_active())
             $_SESSION['_no2_flash'] = $this->flash;
+
+        return $status;
     }
 
     /**

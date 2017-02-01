@@ -1,3 +1,6 @@
+# NOTE: keep in sync with app/config.class.php
+CONFIG_VERSION: 2016092001
+
 # Security first :)
 security:
     # The bcrypt cost, used for authentication.
@@ -5,10 +8,14 @@ security:
     #   This value should be ajusted so that password check takes between 0.2s
     #   and 0.5s (depending on the resistance against online/offline attack
     #   desired).
-    bcrypt_cost: 14
-
+    bcrypt_cost: 4 # 4 is the minimum value. This is fine for testing env.
+    # true if you want csrf check by default, false otherwise.
+    csrf: true
     # CORS setup
+    # see https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS
     cors:
+        enabled: false
+        allow-credentials: false
         allowed-origins:
             - https://my.trusted.origin.tld
 
@@ -40,8 +47,40 @@ l10n:
     #
     #  NOTE:
     #    An UTF-8 locale is strongly recommended since no2 rely on using UTF-8.
-    default_locale: fr_CH.utf8
+    default_locale: en_GB.utf8
+    # the date, in the strftime format, see
+    # https://secure.php.net/manual/en/function.strptime.php
+    # XXX: this will likely work with "%e %B %Y" and likely bug with everything
+    #      else.
+    #      This format is translated by strftime2momentjs() to a matching
+    #      moment.js format to ensure compatibility with the js datetimepicker.
+    #      If you need to change it, triple check that the translated moment.js
+    #      format is the same.
+    strftime_date_format: "%e %B %Y"
+    # the datetime, the strftime format, see
+    # https://secure.php.net/manual/en/function.strptime.php
+    # XXX: this will likely work with "%e %B %Y %H:%M" and likely bug with
+    #      everything else.
+    #      This format is translated by strftime2momentjs() to a matching
+    #      moment.js format to ensure compatibility with the js datetimepicker.
+    #      If you need to change it, triple check that the translated moment.js
+    #      format is the same.
+    strftime_datetime_format: "%e %B %Y %H:%M"
 
+    # available languages
+    languages:
+        en: english
+        fr: français
+
+    # language / locale match
+    lang2locale:
+        en: en_GB.utf8
+        fr: fr_CH.utf8
+
+    # translation files
+    translations:
+        en_GB.utf8: "{{APPDIR}}/locales/messages.en.yml"
+        fr_CH.utf8: "{{APPDIR}}/locales/messages.fr.yml"
 
 # database setup.
 database: mysql://no2test:no2test@localhost/no2test

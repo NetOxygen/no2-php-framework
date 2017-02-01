@@ -3,14 +3,13 @@
  * @file config.class.php
  *
  * Configuration files handler.
- *
- * @author
- *   Alexandre Perrin <alexandre.perrin@netoxygen.ch>
  */
 use Symfony\Component\Yaml\Parser;
 
 class AppConfig
 {
+    const CONFIG_VERSION = 2016092001;
+
     /**
      * the config array.
      */
@@ -18,6 +17,10 @@ class AppConfig
 
     /**
      * parse a yml config file and return the result.
+     *
+     * On success, AppConfig will provide the newly parsed configuration after
+     * parse() returns. On error, the configuration is not loaded and an
+     * exception is thrown.
      *
      * @param $path
      *   The yml config file path
@@ -27,14 +30,35 @@ class AppConfig
      *   used to simulate "variables" in the config, mostly for paths like
      *   APPDIR etc.
      *
+     * @throw InvalidArgumentException
+     *  If the provided configuration path is not in sync with CONFIG_VERSION.
+     *
      * @return
      *   The parsed result
      */
-    public static function parse($path, $sub)
+    public static function parse($path, $sub = null)
     {
-        $yaml   = new Parser();
-        $parsed = $yaml->parse(file_get_contents($path));
+        $yaml     = new Parser();
+        $parsed   = $yaml->parse(file_get_contents($path));
+        $previous = static::$config;
+
+        // install the newly parsed config
         static::$config = static::substitute($parsed, $sub);
+
+        // check if the version match
+        $expected = static::CONFIG_VERSION;
+        $version  = static::get('CONFIG_VERSION');
+        $match    = ($version === $expected);
+        if (!$match) {
+            $msg = sprintf(
+                'CONFIG_VERSION missmatch, expected %s but got %s',
+                strval($expected),
+                strval($version)
+            );
+            static::$config = $previous; // revert to the previous config.
+            throw new InvalidArgumentException($msg);
+        }
+
         return static::$config;
     }
 
@@ -89,6 +113,9 @@ class AppConfig
     {
         $result = $data;
 
+        if (!is_array($sub))
+            return $result;
+
         if (is_string($data)) {
             $result = str_replace(array_keys($sub), array_values($sub), $data);
         } else if (is_array($data)) {
@@ -96,6 +123,7 @@ class AppConfig
             foreach ($data as $key => $value)
                 $result[$key] = static::substitute($value, $sub);
         }
+
         return $result;
     }
 }

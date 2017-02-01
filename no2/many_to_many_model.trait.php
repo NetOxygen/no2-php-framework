@@ -66,13 +66,19 @@ trait No2_ManyToManyModel
 
         $profile = $this->__db_profile;
         $options = ['profile' => $profile];
-        if (empty($values))
+        $success = false;
+        if (empty($values)) { // we only need to execute the DELETE query
             $success = (No2_SQLQuery::execute($delete, $delete_params, $options) !== false);
-        else {
-            // start a transaction if we're not already in one.
-            $already_in_transaction = No2_SQLQuery::_inTransaction();
-            if (!$already_in_transaction)
-                No2_SQLQuery::_beginTransaction($profile);
+        } else {
+            $transaction = false; // true if we started the transaction, false otherwise.
+            if (!No2_SQLQuery::_inTransaction()) { // start our own transaction
+                $transaction = No2_SQLQuery::_beginTransaction($profile);
+                if (!$transaction) {
+                    No2_Logger::err(get_class($this) . '->many_to_many_set: could not start a transaction');
+                    return false;
+                }
+            }
+            // from here on, we are in a transaction
 
             // do the work
             $success = (
@@ -81,9 +87,9 @@ trait No2_ManyToManyModel
             );
 
             // terminate the transaction if we started it.
-            if (!$already_in_transaction) {
+            if ($transaction) {
                 if ($success)
-                    No2_SQLQuery::_commitTransaction($profile);
+                    $success = No2_SQLQuery::_commitTransaction($profile);
                 else
                     No2_SQLQuery::_rollBackTransaction($profile);
             }

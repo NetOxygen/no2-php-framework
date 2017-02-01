@@ -19,6 +19,9 @@
  *   Alexandre Perrin <alexandre.perrin@netoxygen.ch>
  */
 include(dirname(__FILE__) . '/../bootstrap.inc.php');
+if (array_key_exists('lang', $_REQUEST)) { // FIXME: configurable lang param through AppConfig?
+    current_lang_is($_REQUEST['lang']);
+}
 
 /*
  * CORS setup, needed if we provide API calls that could be requested by other
@@ -27,13 +30,12 @@ include(dirname(__FILE__) . '/../bootstrap.inc.php');
  * see https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS
  */
 if (AppConfig::get('security.cors.enabled', false)) {
-    $continue = cross_origin_resource_sharing(
+    if (cross_origin_resource_sharing(
         AppConfig::get('security.cors.allowed-origins', []),
         AppConfig::get('security.cors.allow-credentials', false)
-    );
-    if (!$continue)
+    )) {
         die();
-    unset($continue);
+    }
 }
 
 /*
@@ -59,7 +61,7 @@ if (is_null($controller)) {
 }
 
 /*
- * Execute the requested action in order to be able to render the ressource.
+ * Execute the requested action in order to be able to render the resource.
  */
 invoke_it:
 if (No2_Logger::$level >= No2_Logger::DEBUG) {
@@ -100,7 +102,7 @@ if (No2_HTTP::is_error($view->status()) && !$controller->can_render_errors()) {
 /* from this point, $controller and $view are set and valid. */
 
 /*
- * Here we know the status code, log the request and render the requested ressource.
+ * Here we know the status code, log the request and render the requested resource.
  */
 No2_Logger::info("{$_SERVER['REMOTE_ADDR']} - {$_SERVER['REQUEST_METHOD']} - {$_SERVER['REQUEST_URI']} - {$view->status()}");
 

@@ -1,13 +1,13 @@
 CREATE TABLE users (
-    id              INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    id              CHAR(36) NOT NULL PRIMARY KEY,
 
     updated_at      DATETIME NOT NULL,
     created_at      DATETIME NOT NULL,
 
-    updated_by      INTEGER DEFAULT NULL,
+    updated_by      CHAR(36) DEFAULT NULL,
     INDEX updated_by_index (updated_by),
     FOREIGN KEY (updated_by) REFERENCES users(id),
-    created_by      INTEGER DEFAULT NULL,
+    created_by      CHAR(36) DEFAULT NULL,
     INDEX created_by_index (created_by),
     FOREIGN KEY (created_by) REFERENCES users(id),
 

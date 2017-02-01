@@ -13,7 +13,7 @@
  *   Alexandre Perrin <alexandre.perrin@netoxygen.ch>
  */
 
-// define a constant for local path
+// define some constants for local paths
 define('PROJECTDIR', dirname(__FILE__));
 define('APPDIR', PROJECTDIR . '/app');
 define('WEBDIR', PROJECTDIR . '/web');
@@ -48,9 +48,6 @@ require_once(APPDIR . '/help.inc.php');
 // set the timezone
 date_default_timezone_set(AppConfig::get('l10n.default_timezone'));
 
-// set the locale
-setlocale(LC_ALL, AppConfig::get('l10n.default_locale'));
-
 // start the logger
 if (!No2_Logger::setup(AppConfig::get('logger'))) {
     error_log('unable to setup Logger');
@@ -72,3 +69,6 @@ session_set_cookie_params(
     dirname($_SERVER['SCRIPT_NAME'])
 );
 session_start() or die('session_start()');
+
+// setup the translation stuff (must be after the session stuff!)
+create_translator(current_locale());

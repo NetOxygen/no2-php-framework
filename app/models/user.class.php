@@ -15,11 +15,11 @@ class User extends BaseModel {
 
     public function db_infos() {
         return [
-            'id'              => ['protected' => true, 'type' => 'integer'],
+            'id'              => ['protected' => true, 'type' => 'uuidv4'],
             'created_at'      => ['protected' => true, 'type' => 'datetime'],
             'updated_at'      => ['protected' => true, 'type' => 'datetime'],
-            'created_by'      => ['protected' => true, 'type' => 'integer'],
-            'updated_by'      => ['protected' => true, 'type' => 'integer'],
+            'created_by'      => ['protected' => true, 'type' => 'uuidv4'],
+            'updated_by'      => ['protected' => true, 'type' => 'uuidv4'],
             'role'            => ['protected' => true], // see roles() (or 'anonymous' but not likely in db)
             'passwd'          => ['protected' => true],
             'is_active'       => ['protected' => true, 'type' => 'boolean', 'default' => true],
@@ -31,33 +31,37 @@ class User extends BaseModel {
     }
 
     /* the current user */
-    protected static $current_user = NULL;
+    protected static $current_user = null;
 
     /**
      * possibles values for the 'role' field.
      *
-     * @param $r
-     *   If NULL then an array of possibles values is returned. Otherwise this
-     *   function return the value associated to the key $r (or NULL).
+     * @param $role
+     *   If null then an array of possibles values is returned. Otherwise this
+     *   function return the value associated to the key $role (or null).
      *
      * @return
-     *   An array or NULL depending on the $r argument.
+     *   An array, a string, or null depending on the $role argument.
      *
      * NOTE:
      *   'anonymous' is a valid value for an object living in memory. It is
      *   used for non-auth users. It is ommited here because it is not a valid
      *   value for a db entry.
      */
-    public static function roles($r=NULL) {
-        $data = array(
+    public static function roles($role = null)
+    {
+        $data = [
             // 'db value' => 'desc'
-            'admin'     => t('Administrator'),
-            'user'      => t('User (other)'),
-        );
-        if (is_null($r))
-            return $data;
-        else
-            return (array_key_exists($r, $data) ? $data[$r] : NULL);
+            'admin'     => t('user.role.admin'),
+            'user'      => t('user.role.user'),
+        ];
+
+        if (is_null($role)) {
+            $result = $data;
+        } else {
+            $result = (array_key_exists($role, $data) ? $data[$role] : null);
+        }
+        return $result;
     }
 
     /*
@@ -78,6 +82,12 @@ class User extends BaseModel {
     {
         return $q->where('is_active');
     }
+
+    public static function scope_inactive($q)
+    {
+        return $q->where('NOT is_active');
+    }
+
 
     /**
      * User password hash function.
@@ -124,20 +134,25 @@ class User extends BaseModel {
      * @return
      *   NULL if the authentication failed, a User object on success.
      */
-    public static function authenticate($email, $password) {
-        $success = false;
-        $user    = static::first()->active()->email($email)->select();
-        $root    = static::first()->root()->select();
-        if (!$user) {
-            /*
-             * We call password_verify() to avoid leaking a timing attack on
-             * authentication. We use the root user because it is expected that
-             * its password "cost" is the same as the other users.
-             */
-            static::password_verify($password, $root->passwd);
-        } else {
-            $success = static::password_verify($password, $user->passwd);
-        }
+    public static function authenticate($email, $password)
+    {
+        /*
+         * We call password_verify() in any case to avoid leaking a timing
+         * attack on authentication. We use the root user because it is
+         * expected that its password "cost" is the same as the other users
+         * (and it's the only one the system knows about).
+         */
+        $user        = static::first()->active()->email($email)->select();
+        $root        = static::first()->root()->select();
+        $user_ok     = ($user ? true : false);
+        $passwd      = ($user_ok ? $user->passwd : $root->passwd);
+        $password_ok = static::password_verify($password, $passwd);
+
+        /*
+         * this is not a typo, we use a binary AND, because logical AND should
+         * not be time const.
+         */
+        $success = ($user_ok & $password_ok);
 
         // log the attempt
         $ip_infos = "IP={$_SERVER['REMOTE_ADDR']}";
@@ -147,7 +162,7 @@ class User extends BaseModel {
             ($success ? 'Successfull' : 'Failed') . " login for $email ($ip_infos)"
         );
 
-        return ($success ? $user : NULL);
+        return ($success ? $user : null);
     }
 
     /**
@@ -196,23 +211,24 @@ class User extends BaseModel {
     /**
      * classic validate() function.
      */
-    public function validate() {
+    public function validate()
+    {
         if (empty($this->fullname))
-            $this->error_add('fullname', t("Can't be empty"));
+            $this->error_add('fullname', t('validations.empty'));
 
         if (!in_array($this->gender, array('?', 'M', 'F')))
-            $this->error_add('gender', t('is invalid'));
+            $this->error_add('gender', t('validations.invalid'));
 
         if (is_null(static::roles($this->role)))
-            $this->error_add('role', t('is invalid'));
+            $this->error_add('role', t('validations.invalid'));
 
         if (!preg_match('/^[^@]+@[^@]+\.[^@]+$/', $this->email))
-            $this->error_add('email', t('is invalid'));
+            $this->error_add('email', t('validations.invalid'));
         $same_email_query = static::first()->where('email = :email', array(':email' => $this->email));
         if (!$this->is_new_record())
             $same_email_query = $same_email_query->where('id <> :id', array(':id' => $this->id));
         if ($same_email_query->count() > 0)
-            $this->error_add('email', t('is already taken'));
+            $this->error_add('email', t('validations.already_taken'));
     }
 
     /**

@@ -39,7 +39,10 @@ abstract class No2_AbstractModel
     /**
      * define database fields and options.
      *
-     * No2_AbstractModel only use the following properties:
+     * No2_AbstractModel use the following properties:
+     *  - type: used to convert when setting a new value
+     *    (see __set_translators()) and when saving to the database
+     *    (see massage_for_storage_translators()).
      *  - default: the default value on object creation
      *  - protected: if set to true, the field is not updated by
      *    update_properties(). Useful for fields that are not intended to be
@@ -334,15 +337,14 @@ abstract class No2_AbstractModel
      *
      * @note
      *   This method will always use the 'default' database profile. Consider
-     *   using ::first()->query_one($profile)->id($id)->select() when a
+     *   using ::first()->query_on($profile)->id($id)->select() when a
      *   non-default database profile is needed.
      *
      * @param $id
      *   the id value to find.
      *
      * @return
-     *  - null if there is no row matching
-     *  - An instance if there a row matching.
+     *   An instance of static a matching row is found, null otherwise.
      */
     public static function find($id)
     {
@@ -463,8 +465,8 @@ abstract class No2_AbstractModel
      * update this model's properties.
      *
      * This method fiter some properties given in order to avoid user injection
-     * of internal data field like id. The internal_fields() function can setup
-     * an array of fields that should be filtered.
+     * of internal data field (like id). The 'protected' db_infos() property is
+     * used to protect fields that should be filtered by this function.
      *
      * @param $properties
      *   An array of new properties.
@@ -485,7 +487,7 @@ abstract class No2_AbstractModel
                 // filter out protected properties.
                 if (array_key_exists('protected', $field_infos) && $field_infos['protected']) {
                     No2_Logger::warn(get_class($this) . '#update_properties: ' .
-                        "filtering out $field (protected)"
+                        "filtering out $name (protected)"
                     );
                 } else {
                     $this->$name = $val; // see __set()
@@ -553,17 +555,16 @@ abstract class No2_AbstractModel
     }
 
     /**
-     * Save the current Object. If the object was loaded by the database, an
-     * UPDATE is performed and an INSERT otherwise. This method will call
-     * is_valid() and ensure that true is returned before attempting to save
-     * it.
+     * Save the current Object. If the object was loaded by the database,
+     * update() will be called and otherwise insert() will be called. If the
+     * do_validate param evaluate to true, the return value of is_valid() will
+     * be checked before any attempt to save this.
      *
      * @param $do_validate
      *   Control if the object's state should be validated (calling and
-     *   checking the return value of is_valid()). If $do_validate is true,
-     *   is_valid() is called and false is returned by save() if validation
-     *   failed. if $do_validate is false, then save() doesn't try to validate
-     *   the object.
+     *   checking the return value of is_valid()). If $do_validate evaluate to
+     *   true, is_valid() is called and false will be returned on validation
+     *   failure.
      *
      * @return
      *   false on error, true otherwise.
@@ -593,7 +594,7 @@ abstract class No2_AbstractModel
             if ($is_new_record)
                 $rows = $query->insert1($properties);
             else
-                $rows = $query->set($properties)->id($this->id)->update();
+                $rows = $query->id($this->id)->set($properties)->update($this->id);
             $success = !is_null($rows);
         }
 

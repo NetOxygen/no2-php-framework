@@ -40,7 +40,7 @@ abstract class BaseModel extends No2_AbstractModel
             },
             'json' => function ($val) {
                 if (!is_string($val))
-                    $val = json_encode($val);
+                    $val = sane_json_encode($val);
                 return json_decode($val);
             },
             'uuidv4' => function ($val) {
@@ -63,12 +63,12 @@ abstract class BaseModel extends No2_AbstractModel
             },
             'datetime' => function ($val) {
                 if ($val instanceof DateTime)
-                    return $val->format(DateTime::ISO8601);
+                    return datetime_to_iso8601($val);
                 return $val;
             },
             'json' => function ($val) {
                 if (is_object($val) || is_array($val))
-                    return json_encode($val, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+                    return sane_json_encode($val, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
                 return $val;
             },
         ]);
@@ -136,9 +136,9 @@ abstract class BaseModel extends No2_AbstractModel
         $fields = "";
         foreach ($this->db_infos() as $key => $meta) {
             $value = $this->$key;
-            if (is_null($value))
+            if (is_null($value)) {
                 $value = 'null';
-            elseif (array_key_exists('type', $meta)) {// this field has a cast type
+            } elseif (array_key_exists('type', $meta)) {// this field has a cast type
                 switch ($meta['type']) {
                 case 'boolean': /* FALLTHROUGH */
                 case 'integer': /* FALLTHROUGH */
@@ -146,17 +146,18 @@ abstract class BaseModel extends No2_AbstractModel
                 case 'double':  /* FALLTHROUGH */
                     break;
                 case 'datetime':
-                    $value = $value->format(DateTime::ISO8601);
+                    $value = datetime_to_iso8601($value);
                     break;
                 case 'json':
                     if (is_object($value) || is_array($value))
-                        $value = json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+                        $value = sane_json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
                     break;
                 default: // string
                     $value = "\"$value\"";
                 }
-            } else // assume string
+            } else { // assume string
                 $value = "\"$value\"";
+            }
             $fields .= sprintf(" %s=%s", $key, $value);
         }
         return "#<$klass:$fields>";

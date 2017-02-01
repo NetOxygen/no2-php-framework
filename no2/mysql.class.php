@@ -119,9 +119,10 @@ class No2_MySQL implements No2_Database
     {
         // http://stackoverflow.com/questions/1522313/php-mysql-real-escape-string-stripslashes-leaving-multiple-slashes
         // RT #36248
-        if(get_magic_quotes_gpc())
-            $s = stripslashes($s);
-        return "'" . mysql_real_escape_string($s, $this->link) . "'";
+        $stripslashed = (get_magic_quotes_gpc() ? stripslashes($s) : $s);
+        $escaped      = mysql_real_escape_string($stripslashed, $this->link);
+        $quoted       = "'$escaped'";
+        return $quoted;
     }
 
     /**

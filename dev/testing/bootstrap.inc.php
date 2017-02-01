@@ -13,9 +13,9 @@
  *   Alexandre Perrin <alexandre.perrin@netoxygen.ch>
  */
 
-// define a constant for local path
-define('TESTSDIR', dirname(__FILE__));
+// define some constants for local paths
 define('PROJECTDIR', dirname(__FILE__).'/../..');
+define('TESTSDIR', dirname(__FILE__));
 define('APPDIR', PROJECTDIR . '/app');
 define('WEBDIR', PROJECTDIR . '/web');
 
@@ -23,7 +23,7 @@ define('WEBDIR', PROJECTDIR . '/web');
 require_once(PROJECTDIR . '/compat/all.inc.php');
 
 // load Composer stuff
-//require_once(PROJECTDIR . '/vendor/autoload.php');
+require_once(PROJECTDIR . '/vendor/autoload.php');
 
 // initialize no2 framework.
 require_once(PROJECTDIR . '/no2/no2.inc.php');
@@ -50,9 +50,6 @@ require_once(APPDIR . '/help.inc.php');
 // set the timezone
 date_default_timezone_set(AppConfig::get('l10n.default_timezone'));
 
-// set the locale
-setlocale(LC_ALL, AppConfig::get('l10n.default_locale'));
-
 // start the logger
 if (!No2_Logger::setup(AppConfig::get('logger'))) {
     error_log('unable to setup Logger');
@@ -67,3 +64,13 @@ if (function_exists('header_remove')) {
 } else {
     @ini_set('expose_php', 'off');
 }
+
+// start the session
+session_set_cookie_params(
+    0, /* http://www.php.net/manual/en/session.configuration.php#ini.session.cookie-lifetime */
+    dirname($_SERVER['SCRIPT_NAME'])
+);
+session_start() or die('session_start()');
+
+// setup the translation stuff (must be after the session stuff!)
+create_translator(current_locale());

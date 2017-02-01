@@ -14,13 +14,13 @@ $code = $total - $empty - $comment;
 $code = 1 if ($code eq 0);
 
 format =
-total:    @###
+total:    @#####
           $total
-code:     @###
+code:     @#####
           $code
-empty:    @###
+empty:    @#####
           $empty
-comment:  @###
+comment:  @#####
           $comment
 ------------------------
 comment/code ratio: @.##

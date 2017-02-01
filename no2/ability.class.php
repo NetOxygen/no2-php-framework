@@ -158,21 +158,20 @@ abstract class No2_AbstractAbility
          * Basic conditions optimization: we can already evaluate the boolean
          * conditions right now, only register the context-dependent ones.
          */
-        $cd = [];
+        $cds = [];
         foreach ($conditions as $condition) {
             if (is_bool($condition)) {
                 if (!$condition)
                     return;
             } else // not trivial
-                $cd[] = $condition;
+                $cds[] = $condition;
         }
-        $conditions = $cd;
 
         /*
          * make it so the empty array is equivalent to true
          */
-        if (count($conditions) === 0)
-            $conditions = true;
+        if (count($cds) === 0)
+            $cds = true;
 
         if (!array_key_exists($action, $this->rules))
             $this->rules[$action] = [];
@@ -184,7 +183,7 @@ abstract class No2_AbstractAbility
             );
         }
 
-        $this->rules[$action][$resource] = $conditions;
+        $this->rules[$action][$resource] = $cds;
     }
 
     /**

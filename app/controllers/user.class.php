@@ -9,7 +9,7 @@ require_once(APPDIR . '/controllers/base_controller.class.php');
 
 class UserController extends BaseController {
     /**
-     * the user ressource object (not the current user). If an id is given in
+     * the user resource object (not the current user). If an id is given in
      * the request, the authorization mechanism will fetch the user from the db
      * and set this variable.
      *
@@ -70,13 +70,14 @@ class UserController extends BaseController {
     /**
      * user authentication.
      */
-    protected function POST_login() {
+    protected function POST_login()
+    {
         $user = User::authenticate($_REQUEST['email'], $_REQUEST['cleartext']);
         if (is_null($user)) {
-            $this->flash['error'] = t("Bad email or password.");
+            $this->flash['error'] = ht('admin.user.messages.wrong_email_or_password');
         } else {
             User::current_is($user);
-            $this->flash['success'] = sprintf(t('Welcome back %s!'), h($user->fullname));
+            $this->flash['success'] = ht('admin.user.messages.welcome_back', ['%name%' => $user->fullname]);
 
             global $router;
             $this->view->redirect_to($router->root_url());
@@ -91,9 +92,10 @@ class UserController extends BaseController {
      *   POST (and in a perfect REST world, maybe event a DELETE on a session
      *   resource).
      */
-    protected function GET_logout() {
+    protected function GET_logout()
+    {
         User::current_is(NULL);
-        $this->flash['info'] = t("You're logged out.");
+        $this->flash['info'] = ht('admin.user.messages.logged_out');
 
         global $router;
         $this->view->redirect_to($router->root_url());
@@ -138,7 +140,8 @@ class UserController extends BaseController {
     /**
      * update user action.
      */
-    protected function POST_update() {
+    protected function POST_update()
+    {
         // password fields are handled in a special way.
         if (!empty($_REQUEST['new-password']) && $_REQUEST['new-password'] == $_REQUEST['new-password-confirmation'])
             $this->user->update_password($_REQUEST['new-password']);
@@ -152,13 +155,17 @@ class UserController extends BaseController {
         $this->user->update_properties($_REQUEST['user']);
 
         if ($this->user->save()) {
-            $this->flash['success'] = sprintf(t("The user %s (%s) has been saved."),
-                h($this->user->fullname), h($this->user->email));
+            $this->flash['success'] = ht(
+                'admin.user.messages.has_been_saved',
+                ['%name%' => $this->user->fullname]
+            );
             global $router;
             $this->view->redirect_to($router->user_url($this->user));
         } else {
-            $this->flash['error'] = sprintf(t("An error occured while trying to save the user %s (%s)"),
-                h($this->user->fullname), h($this->user->email));
+            $this->flash['error'] = ht(
+                'admin.user.messages.could_not_be_saved',
+                ['%name%' => $this->user->fullname]
+            );
         }
         $this->view->user = $this->user;
     }
@@ -166,15 +173,20 @@ class UserController extends BaseController {
     /**
      * disable user action.
      */
-    protected function POST_disable() {
+    protected function POST_disable()
+    {
         $this->user->is_active = false;
 
         if ($this->user->save()) {
-            $this->flash['success'] = sprintf(t("The user %s (%s) has been successfully disabled."),
-                h($this->user->fullname), h($this->user->email));
+            $this->flash['success'] = ht(
+                'admin.user.messages.has_been_disabled',
+                ['%name%' => $this->user->fullname]
+            );
         } else {
-            $this->flash['error'] = sprintf(t("An error occured while trying to disable the user %s (%s)"),
-                h($this->user->fullname), h($this->user->email));
+            $this->flash['error'] = ht(
+                'admin.user.messages.could_not_be_disabled',
+                ['%name%' => $this->user->fullname]
+            );
         }
 
         global $router;
@@ -184,15 +196,20 @@ class UserController extends BaseController {
     /**
      * enable user action.
      */
-    protected function POST_enable() {
+    protected function POST_enable()
+    {
         $this->user->is_active = true;
 
         if ($this->user->save()) {
-            $this->flash['success'] = sprintf(t("The user %s (%s) has been successfully enabled."),
-                h($this->user->fullname), h($this->user->email));
+            $this->flash['success'] = ht(
+                'admin.user.messages.has_been_enabled',
+                ['%name%' => $this->user->fullname]
+            );
         } else {
-            $this->flash['error'] = sprintf(t("An error occured while trying to enable the user %s (%s)"),
-                h($this->user->fullname), h($this->user->email));
+            $this->flash['error'] = ht(
+                'admin.user.messages.could_not_be_enabled',
+                ['%name%' => $this->user->fullname]
+            );
         }
 
         global $router;
@@ -213,8 +230,10 @@ class UserController extends BaseController {
         global $router;
 
         $this->user->destroy();
-        $this->flash['success'] = sprintf(t("The user %s (%s) has been successfully destroyed."),
-            h($this->user->fullname), h($this->user->email));
+        $this->flash['success'] = ht(
+            'admin.user.messages.has_been_destroyed',
+            ['%name%' => $this->user->fullname]
+        );
         $this->view->redirect_to($router->users_url());
     }
 }

@@ -53,9 +53,10 @@ class No2_SQLQuery
      *   _mysql://user:password@hostname/database
      *      MySQL driver using the (old) mysql interface (deprecated).
      *   sqlite:///path/to/project.db
-     *      SQLite driver (not implemented yet).
+     *      SQLite driver (not implemented yet!).
      *   _wpdb
-     *      When embeded into a wordpress blog, it will use a $wpdb proxy.
+     *      When embeded into a Wordpress blog, it will use the global $wpdb
+     *      object.
      *
      * @param $profile
      *   A key for the configured link. When performing a query, the user can
@@ -68,7 +69,7 @@ class No2_SQLQuery
     public static function setup($str, $profile = self::DEFAULT_PROFILE)
     {
         $matches = [];
-        if (preg_match('#^mysql://(\w+):(\w+)@(\w+)/(\w+)$#', $str, $matches)) {
+        if (preg_match('#^mysql://([^:]+):([^@]+)@([^/]+)/([^\s]+)$#', $str, $matches)) {
             // default MySQL driver using the PDO interface.
             $user     = $matches[1];
             $password = $matches[2];
@@ -77,7 +78,7 @@ class No2_SQLQuery
 
             require_once(NO2DIR . '/pdo_mysql.class.php');
             $handle = new No2_PDO_MySQL($hostname, $database, $user, $password);
-        } else if (preg_match('#^pgsql://(\w+):(\w+)@(\w+)/(\w+)$#', $str, $matches)) {
+        } else if (preg_match('#^pgsql://([^:]+):([^@]+)@([^/]+)/([^\s]+)$#', $str, $matches)) {
             $user     = $matches[1];
             $password = $matches[2];
             $hostname = $matches[3];
@@ -85,7 +86,7 @@ class No2_SQLQuery
 
             require_once(NO2DIR . '/pdo_postgresql.class.php');
             $handle = new No2_PDO_PostgreSQL($hostname, $database, $user, $password);
-        } else if (preg_match('#^_mysql://(\w+):(\w+)@(\w+)/(\w+)$#', $str, $matches)) {
+        } else if (preg_match('#^_mysql://([^:]+):([^@]+)@([^/]+)/([^\s]+)$#', $str, $matches)) {
             // the old mysql interface is still supported, although you must
             // "force" it with _mysql as driver.
             $user     = $matches[1];
@@ -164,8 +165,8 @@ class No2_SQLQuery
      * @param $options
      *   An array of options. The following keys are valid:
      *   - factory:
-     *      a class that will be called with No2_MySQL::fetch_object() on a
-     *      SELECT query.
+     *      a class used to create instances from a SELECT query, should have a
+     *      load() static method.
      *   - return_as_collection:
      *      if true an array with the result will always be returned, even if
      *      there is no or one element(s). If not set or set to false the
@@ -192,32 +193,39 @@ class No2_SQLQuery
             $options['profile'] : static::DEFAULT_PROFILE
         );
         $db = static::_database_or_throw($profile);
-        $result = $db->execute($q, $arguments);
+        $dbres = $db->execute($q, $arguments);
 
-        if (!is_object($result) && !is_resource($result))
-            return $result;
+        if (!is_object($dbres) && !is_resource($dbres))
+            return $dbres;
 
         $objects = [];
         if (array_key_exists('factory', $options) && class_exists($options['factory'])) {
             $klass = $options['factory'];
-            while ($properties = $db->fetch_assoc($result))
+            while ($properties = $db->fetch_assoc($dbres))
                 $objects[] = $klass::load($properties, $profile);
         } else {
-            while ($array = $db->fetch_assoc($result))
+            while ($array = $db->fetch_assoc($dbres))
                 $objects[] = $array;
         }
 
         if (array_key_exists('return_as_collection', $options) &&
                 $options['return_as_collection']) {
-            return $objects;
+            $results = $objects;
+        } else {
+            switch (count($objects)) {
+            case 0:
+                $results = null;
+                break;
+            case 1:
+                $results = $objects[0];
+                break;
+            default: // more than one
+                $results = $objects;
+                break;
+            }
         }
 
-        switch (count($objects)) {
-        case 0:  return null;
-        case 1:  return $objects[0];
-        default: return $objects;
-        }
-        /* NOTREACHED */
+        return $results;
     }
 
     /*
@@ -428,8 +436,8 @@ class No2_SQLQuery
      * `scope_'.
      *
      * The model class scope_* method should take one argument that is "this",
-     * a SQLQuery instance. It will modify it (like calling where()) and should
-     * return the result.
+     * a No2_SQLQuery instance. It will modify it (like calling where()) and
+     * should return the result.
      */
     public function __call($name, $arguments)
     {
@@ -590,7 +598,7 @@ class No2_SQLQuery
      * more than once, only the last call will be taken into account.
      *
      * @param $off
-     *   The offset the start the limit (first argument to limit, starting point).
+     *   The offset (first argument to limit, starting point).
      *
      * @param $count
      *   The number of results to return (second argument to limit, duration).
@@ -782,7 +790,7 @@ class No2_SQLQuery
         $arguments = array_merge($this->arguments, $arguments, ['{__table}' => $klass::$table]);
         $options   = [
             'profile'              => $this->profile,
-            'factory'              => $this->klass,
+            'factory'              => $klass,
             'return_as_collection' => ($this->hint == self::EXPECT_MANY),
         ];
         $q = "{$select} FROM {__table} {$this->join} {$this->where} {$this->group_by} {$this->order_by} {$this->limit} {$this->select4}";
@@ -891,10 +899,14 @@ class No2_SQLQuery
     /**
      * execute an UPDATE instruction. set() should have been called before.
      *
+     * @param $mysql_id_hack
+     *   Since MySQL doesn't have RETURNING, we need the id to get back the
+     *   updated row. If the id field is updated, the "new" id must be
+     *   provided.
      * @return
      *   false on error, true otherwise.
      */
-    public function update()
+    public function update($mysql_id_hack = null)
     {
         $this->restrict_to(self::UPDATE);
 
@@ -903,19 +915,24 @@ class No2_SQLQuery
                 'called without previous set() call.');
         }
 
-        $klass     = $this->klass;
-        $arguments = array_merge($this->arguments, ['{__table}' => $klass::$table]);
+        $klass = $this->klass;
+        $klass_arguments = ['{__table}' => $klass::$table];
+        $arguments = array_merge($this->arguments, $klass_arguments);
         $options   = ['profile' => $this->profile];
         $db        = static::_database_or_throw($this->profile);
         $updated   = false;
+        $sql       = "UPDATE {__table} {$this->set} {$this->where}";
         if ($db->has_returning()) {
-            $sql     = "UPDATE {__table} {$this->set} {$this->where} RETURNING *";
+            $sql    .= ' RETURNING *';
             $updated = static::execute($sql, $arguments, $options);
-        } else { // XXX: asume MySQL, hacky.
-            $last_insert_id_hack = (empty($this->set) ? 'SET' : ',') . ' id = LAST_INSERT_ID(id)';
-            $sql = "UPDATE {__table} {$this->set} {$last_insert_id_hack} {$this->where}";
+        } else { // XXX: TOCTOU, hacky.
             if (static::execute($sql, $arguments, $options) !== false) {
-                $updated = static::execute('SELECT * FROM {__table} WHERE id = LAST_INSERT_ID()', $arguments, $options);
+                $sql       = 'SELECT * FROM {__table} WHERE id = :mysql_id_hack';
+                $arguments = array_merge(
+                    [':mysql_id_hack' => $mysql_id_hack],
+                    $klass_arguments
+                );
+                $updated   = static::execute($sql, $arguments, $options);
             }
         }
 

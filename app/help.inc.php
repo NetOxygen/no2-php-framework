@@ -44,22 +44,150 @@ function template($name) {
 /**
  * a translation function.
  *
- * This is an alias to gettext's t() function, but can be modified to use
- * another translation engine.
+ * Use the global $translator or fallback to _() (usually gettext). If an
+ * object is given, it is expected to have a property key current_lang() and
+ * its value is returned.
  */
-function t(/* ... */) {
+function t()
+{
+    global $translator;
     $argv = func_get_args();
-    return call_user_func_array('_', $argv);
+    if (count($argv) === 1 && is_object($argv[0])) {
+        $prop = current_lang();
+        $ret  = $argv[0]->$prop;
+    } elseif (isset($translator)) {
+        $ret = call_user_func_array([$translator, 'trans'], $argv);
+    } else {
+        $ret = call_user_func_array('_', $argv);
+    }
+    return $ret;
 }
 
 /*
  * very dumb helper "chaining" t() in h().
  */
-function ht(/* ... */) {
+function ht()
+{
     $argv = func_get_args();
     return h(call_user_func_array('t', $argv));
 }
 
+/**
+ * translate a locale to lang.
+ *
+ * @param $locale (string)
+ *   The configured locale (case sensitive).
+ *
+ * @return
+ *   The locale associated to the given lang.
+ */
+function locale_to_lang($locale)
+{
+    $lang = null;
+    $flipped = array_flip(AppConfig::get('l10n.lang2locale'));
+    if (array_key_exists($locale, $flipped)) {
+        $lang = strtolower($flipped[$locale]);
+    }
+    return $lang;
+}
+
+/**
+ * translate a lang to a locale.
+ *
+ * @param $lang (string)
+ *   The configured lang (case insensitive).
+ *
+ * @return
+ *   The lang's matching locale.
+ */
+function lang_to_locale($lang)
+{
+    return AppConfig::get(array('l10n', 'lang2locale', strtolower($lang)));
+}
+
+/**
+ * return the current lang used.
+ */
+function current_lang()
+{
+    return locale_to_lang(current_locale());
+}
+
+/**
+ * set the current lang used.
+ *
+ * @param $new
+ *   the lang to switch to.
+ *
+ * @return
+ *   the current lang after the switch. If the return value doesn't match the
+ *   requested lang the switch has failed.
+ */
+function current_lang_is($new)
+{
+    current_locale_is(lang_to_locale($new));
+    return current_lang();
+}
+
+/**
+ * return the current locale.
+ */
+function current_locale()
+{
+    // try to use the session's locale.
+    if (array_key_exists('_no2_locale', $_SESSION)) {
+        $locale = $_SESSION['_no2_locale'];
+    } else { // fallback to default locale.
+        $locale = AppConfig::get('l10n.default_locale');
+    }
+    return $locale;
+}
+
+/**
+ * set the current locale.
+ *
+ * NOTE: if locale switching does not work, check if the server support the
+ * requested locale using something `locale -a | grep $locale'
+ *
+ * @param $new
+ *   The locale to switch to.
+ *
+ * @return
+ *   the current locale after the switch. If the return value doesn't match the
+ *   requested locale the switch has failed.
+ */
+function current_locale_is($new)
+{
+    global $translator;
+    $old = current_locale();
+    $translations = AppConfig::get('l10n.translations');
+    if (array_key_exists($new, $translations)) {
+        // we do have a translation for the requested locale, do the switch.
+        setlocale(LC_ALL, $new);
+        if (isset($translator)) {
+            $translator->setLocale($new);
+        }
+        $_SESSION['_no2_locale'] = $new;
+    }
+    return current_locale();
+}
+
+/**
+ * Setup a new Translator using the configuration and the given locale.
+ */
+function create_translator($locale)
+{
+    $translator = new Symfony\Component\Translation\Translator($locale);
+    $translator->addLoader('yaml', new Symfony\Component\Translation\Loader\YamlFileLoader());
+    foreach (AppConfig::get('l10n.translations') as $loc => $file) {
+        $translator->addResource('yaml', $file, $loc);
+    }
+
+    $GLOBALS['translator'] = $translator;
+    current_locale_is($locale);
+
+    return $translator;
+}
 
 /**
  * nice shortcut to User::current()
@@ -149,8 +277,7 @@ function csrf_token_check($token)
  *   if true, we send Access-Control-Allow-Credentials.
  *
  * @return
- *   true if the request should proceed, false if it should be terminated
- *   immediately.
+ *   true if the request should stop, false otherwise.
  *
  * @see
  *   https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS
@@ -275,12 +402,4 @@ function s_to_date($s)
         $ret->setTimestamp($t);
     }
     return $ret;
-}
-
-/**
- * XXX: harcoded, fix when importing language stuff from the CDB project.
- */
-function current_lang()
-{
-    return 'en';
 }
