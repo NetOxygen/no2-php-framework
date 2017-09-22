@@ -229,6 +229,7 @@ class UserController extends BaseController {
     protected function POST_destroy() {
         global $router;
 
+        // FIXME: try/catch here?
         $this->user->destroy();
         $this->flash['success'] = ht(
             'admin.user.messages.has_been_destroyed',

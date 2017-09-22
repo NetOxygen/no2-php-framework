@@ -1,0 +1,100 @@
+#!/bin/sh
+#
+# No2 post-merge git hook, warning about config changes, database
+# migrations, composer updates etc.
+
+# fancy ANSI color escape stuff.
+ANSI_ESC_FG_BLACK_BG_YELLOW="[30;43m"
+ANSI_ESC_FG_BOLD_WHITE_BG_RED="[37;41;1m"
+ANSI_ESC_RESET="[0m"
+
+h1_ok() {
+    echo
+    echo -n "${ANSI_ESC_FG_BLACK_BG_YELLOW}===> "
+    echo    "$@${ANSI_ESC_RESET}"
+}
+
+h1_err() {
+    echo
+    echo -n "${ANSI_ESC_FG_BOLD_WHITE_BG_RED}---> "
+    echo    "$@${ANSI_ESC_RESET}"
+}
+
+# print a list of changed files from the directories and/or files arguments.
+# Returns 0 if it printed something, 1 otherwise.
+git_diff_tree() {
+    out=$(git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD "$@")
+    echo "$out" && test -n "$out"
+}
+
+# show hints for every arguments. see also TO_CHECK.
+echo_hints() {
+    for target in "$@"; do
+        case "$target" in
+        # keep up to date with TO_CHECK
+            config/)
+                h1_ok "configuration has changed, you should run:"
+                echo "diff -u config/config.yml config/config.yml.dist"
+                ;;
+            dev/db/)
+                files=$(git_diff_tree "$target")
+                # parse the PostgreSQL credentials from the config.
+                sql_cmd=$(perl -ne 'print "psql -U $1 -h $3 $4" if m{pgsql://(.*?):(.*?)@(.*?)/(.*)}' config/config.yml)
+                if [ -z "$sql_cmd" ]; then
+                    # fallback to MySQL
+                    sql_cmd=$(perl -ne 'print "mysql -u $1 -h $3 -p$2 $4" if m{mysql://(.*?):(.*?)@(.*?)/(.*)}' config/config.yml)
+                fi
+                h1_ok "database migrations updated, you should run:"
+                echo "cat" ${files} "| ${sql_cmd}"
+                ;;
+            dev/git-hooks/)
+                h1_ok "git-hooks updated, you should run:"
+                for hook in dev/git-hooks/*; do
+                    echo "diff -u .git/hooks/$(basename "$hook") $hook"
+                done
+                ;;
+            composer.json)
+                h1_ok "dependencies changed, you should run:"
+                echo "./composer.phar install"
+                ;;
+            dev/htaccess)
+                h1_ok "htaccess changed, you should run:"
+                echo "diff -u web/.htaccess dev/htaccess"
+                ;;
+            *)
+                h1_err "${target} changed (no hint about what should be done to fix it)"
+                ;;
+        esac
+    done
+}
+
+# A list of directories/files to keep an eye one. One logical unit per line.
+# keep up to date with echo_hints().
+TO_CHECK=$(cat <<EOF
+config/
+dev/db/
+dev/git-hooks/
+composer.json
+dev/htaccess
+EOF
+)
+
+# zero if we're not in a squash merge
+# see https://git-scm.com/docs/githooks#_post_merge
+SQUASH_MERGE=$1
+
+# only run if we're not in a squash merge
+test $SQUASH_MERGE -eq 0 || exit
+
+# loop over every unit TO_CHECK, show diff and all hints at the end if any.
+echo "$TO_CHECK" | {
+    SHOW_HINTS=
+    while read target; do
+        if [ -n "$target" ] && git_diff_tree "$target" > /dev/null; then
+            SHOW_HINTS="${SHOW_HINTS}\n${target}"
+        fi
+    done
+    echo "$SHOW_HINTS" | while read target; do
+        test -n "$target" && echo_hints "$target"
+    done
+}

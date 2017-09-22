@@ -1,5 +1,5 @@
 PHPUNITDIR=testing
-PHPUNITOPTIONS=--strict --verbose --bootstrap bootstrap.inc.php
+PHPUNITOPTIONS=--verbose --bootstrap bootstrap.inc.php
 PHPUNITDBNAME=no2test
 PHPUNITDBUSER=no2test
 PHPUNITDBPASS=no2test
